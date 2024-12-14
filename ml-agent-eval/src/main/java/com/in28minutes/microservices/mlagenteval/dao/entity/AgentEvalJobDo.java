@@ -36,22 +36,28 @@ public class AgentEvalJobDo extends BaseEntity {
 
     private Integer isStepEval;
 
-
     private Integer isJobEval;
-
-    private String projectId;
-
-
-    private String tenantId;
-
-
-    private String createUser;
-
-
-    private String updateUser;
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).append("id", getId()).append("taskId", getTaskId()).append("jobName", getJobName()).append("datasetId", getDatasetId()).append("executeTurn", getExecuteTurn()).append("modelName", getModelName()).append("inferUrl", getInferUrl()).append("dag", getDag()).append("promptTemplate", getPromptTemplate()).append("isHistoryActions", getIsHistoryActions()).append("isStepEval", getIsStepEval()).append("isJobEval", getIsJobEval()).append("projectId", getProjectId()).append("tenantId", getTenantId()).append("createUser", getCreateUser()).append("createTime", getCreateTime()).append("updateUser", getUpdateUser()).append("updateTime", getUpdateTime()).toString();
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+                .append("id", getId())
+                .append("taskId", getTaskId())
+                .append("jobName", getJobName())
+                .append("datasetId", getDatasetId())
+                .append("executeTurn", getExecuteTurn())
+                .append("modelName", getModelName())
+                .append("inferUrl", getInferUrl())
+                .append("dag", getDag())
+                .append("promptTemplate", getPromptTemplate())
+                .append("isHistoryActions", getIsHistoryActions())
+                .append("isStepEval", getIsStepEval())
+                .append("isJobEval", getIsJobEval())
+                .append("projectId", getProjectId())
+                .append("tenantId", getTenantId())
+                .append("createUser", getCreateUser())
+                .append("createTime", getCreateTime())
+                .append("updateUser", getUpdateUser())
+                .append("updateTime", getUpdateTime()).toString();
     }
 }

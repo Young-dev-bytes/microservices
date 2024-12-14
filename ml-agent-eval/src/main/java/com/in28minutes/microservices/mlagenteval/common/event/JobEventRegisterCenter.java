@@ -1,8 +1,9 @@
 package com.in28minutes.microservices.mlagenteval.common.event;
 
 import com.google.common.eventbus.AsyncEventBus;
-import com.in28minutes.microservices.mlagenteval.common.event.handler.JobStatusEventHandler;
 import com.in28minutes.microservices.mlagenteval.common.event.handler.JobExecEventHandler;
+import com.in28minutes.microservices.mlagenteval.common.event.handler.JobStatusEventHandler;
+import com.in28minutes.microservices.mlagenteval.common.event.handler.JobTrackDetailEventHandler;
 import com.in28minutes.microservices.mlagenteval.utils.ThreadPoolUtils;
 
 /***
@@ -18,6 +19,7 @@ public class JobEventRegisterCenter {
     static {
         EVENT_BUS.register(new JobExecEventHandler());
         EVENT_BUS.register(new JobStatusEventHandler());
+        EVENT_BUS.register(new JobTrackDetailEventHandler());
     }
 
     public JobEventRegisterCenter() {}

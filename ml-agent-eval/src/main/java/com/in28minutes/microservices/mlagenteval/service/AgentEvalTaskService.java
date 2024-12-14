@@ -8,7 +8,9 @@ import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalTaskDo;
 import com.in28minutes.microservices.mlagenteval.dao.mapper.AgentDeviceReferenceMapper;
 import com.in28minutes.microservices.mlagenteval.dao.mapper.AgentEvalTaskMapper;
 import com.in28minutes.microservices.mlagenteval.dto.*;
+import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
 import com.in28minutes.microservices.mlagenteval.enums.DeviceOccupyStatusEnum;
+import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
 import com.in28minutes.microservices.mlagenteval.utils.UuidUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -28,16 +30,15 @@ import java.util.Objects;
  * @author cw0106718
  * @since 2024-11-25
  */
+
 @Service
 public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, AgentEvalTaskDo> {
 
-//    @Autowired
-//    private TenantServiceProxy tenantProxy;
     @Autowired
     private AgentEvalTaskMapper agentEvalTaskMapper;
 
     @Autowired
-    private AgentDeviceReferenceMapper agentDeviceRefMapper;
+    private AgentDeviceReferenceMapper agentDeviceReferenceMapper;
 
 
     /**
@@ -50,6 +51,7 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
     public void save(AgentEvalTaskSaveReq request) {
         AgentEvalTaskDo taskDo = new AgentEvalTaskDo();
         BeanUtils.copyProperties(request, taskDo);
+        taskDo.setId(UuidUtils.genSimpleUuid());
         taskDo.setEvalTaskType("UIAgent");
         save(taskDo);
         List<DeviceInfo> deviceInfoList = request.getDeviceInfoList();
@@ -64,14 +66,14 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
         }*/
 
         for (DeviceInfo deviceInfo : deviceInfoList) {
-            AgentDeviceReferenceDo agentDeviceRefDo = new AgentDeviceReferenceDo();
-            BeanUtils.copyProperties(deviceInfo, agentDeviceRefDo);
-            agentDeviceRefDo.setTaskId(taskDo.getId());
-            agentDeviceRefDo.setDeviceOccupyStatus(DeviceOccupyStatusEnum.OCCUPIED.getValue());
-            agentDeviceRefDo.setOccupyUser("");
-            agentDeviceRefDo.setOccupyTime(LocalDateTime.now());
-            agentDeviceRefDo.setTimeout(request.getTimeout());
-            agentDeviceRefMapper.insert(agentDeviceRefDo);
+            AgentDeviceReferenceDo agentDeviceReferenceDo = new AgentDeviceReferenceDo();
+            BeanUtils.copyProperties(deviceInfo, agentDeviceReferenceDo);
+            agentDeviceReferenceDo.setTaskId(taskDo.getId());
+            agentDeviceReferenceDo.setDeviceOccupyStatus(DeviceOccupyStatusEnum.OCCUPIED.getValue());
+            /*agentDeviceReferenceDo.setOccupyUser(OperatorUtils.getOperator());*/
+            agentDeviceReferenceDo.setOccupyTime(LocalDateTime.now());
+            agentDeviceReferenceDo.setTimeout(request.getTimeout());
+            agentDeviceReferenceMapper.insert(agentDeviceReferenceDo);
         }
     }
 
@@ -81,10 +83,10 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
      * @param request PageRequest
      * @return PageBaseResponse
      */
-    public Object pageByProject(AgentEvalTaskPageReq request) {
-        /*request.setProjectId("xxx");
-        request.setTenantId("xxx");
-        LambdaQueryWrapper<AgentEvalTaskDo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    public PageBaseResponse<AgentEvalTaskDetail> pageByProject(AgentEvalTaskPageReq request) {
+        /*request.setProjectId(OperatorUtils.getProjectId());
+        request.setTenantId(OperatorUtils.getTenantId());*/
+        /*LambdaQueryWrapper<AgentEvalTaskDo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(AgentEvalTaskDo::getProjectId, request.getProjectId())
                 .eq(AgentEvalTaskDo::getTenantId, request.getTenantId())
                 .orderByDesc(AgentEvalTaskDo::getUpdateTime);
@@ -133,44 +135,43 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
     public void occupyDevice(AgentRelOccReq req) {
         AgentEvalTaskDo taskDo = lambdaQuery().eq(AgentEvalTaskDo::getId, req.getTaskId()).one();
         if(Objects.isNull(taskDo)) {
-            // throw new BusinessException(BizErrorCode.SERVER_ERROR, "Task does not exist.");
-            throw new RuntimeException("Task does not exist.");
+            throw new BusinessException(BizErrorCode.SERVER_ERROR, "Task does not exist.");
         }
         List<DeviceInfo> deviceInfoList = req.getDeviceInfoList();
         if(CollectionUtils.isEmpty(deviceInfoList)) {
-            throw new RuntimeException("pls select device.");
+            throw new BusinessException(BizErrorCode.SERVER_ERROR, "pls select device.");
         }
-        for (DeviceInfo deviceInfo : deviceInfoList) {
-            /*CommonResponse response =
+        /*for (DeviceInfo deviceInfo : deviceInfoList) {
+            CommonResponse response =
                     tenantProxy.occupyDevice(deviceInfo.getDeviceUdid(), OperatorUtils.getOperator(), taskDo.getId());
             if (!response.getCode().equals(CommonResponse.SUCCESS_STATUS)) {
                 //todo:// if occupy failed, then release all devices.
                 throw new BusinessException(BizErrorCode.SERVER_ERROR, "设备占用失败，请使用'占用设备'按钮重新占用.");
-            }*/
-        }
+            }
+        }*/
         for (DeviceInfo deviceInfo : deviceInfoList) {
             LambdaQueryWrapper<AgentDeviceReferenceDo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
             lambdaQueryWrapper.eq(AgentDeviceReferenceDo::getDeviceUdid, deviceInfo.getDeviceUdid());
-            AgentDeviceReferenceDo agentDeviceRefDo = agentDeviceRefMapper.selectOne(lambdaQueryWrapper);
+            AgentDeviceReferenceDo agentDeviceReferenceDo = agentDeviceReferenceMapper.selectOne(lambdaQueryWrapper);
 
-            if(!Objects.isNull(agentDeviceRefDo)) {
-                agentDeviceRefDo.setTimeout(req.getTimeout())
-                        .setOccupyUser("xxx")
+            if(!Objects.isNull(agentDeviceReferenceDo)) {
+                agentDeviceReferenceDo.setTimeout(req.getTimeout())
+                        .setOccupyUser("cw0106718")
                         .setOccupyTime(LocalDateTime.now())
                         .setTaskId(req.getTaskId())
                         .setDeviceOccupyStatus(DeviceOccupyStatusEnum.OCCUPIED.getValue());
-                agentDeviceRefMapper.updateById(agentDeviceRefDo);
+                agentDeviceReferenceMapper.updateById(agentDeviceReferenceDo);
             } else {
                 AgentDeviceReferenceDo agentDeviceRef = new AgentDeviceReferenceDo();
                 agentDeviceRef.setTimeout(req.getTimeout());
                 agentDeviceRef.setId(UuidUtils.genSimpleUuid());
-                agentDeviceRef.setOccupyUser("xxx");
+                agentDeviceRef.setOccupyUser("cw0106718");
                 agentDeviceRef.setOccupyTime(LocalDateTime.now());
                 agentDeviceRef.setTaskId(req.getTaskId());
                 agentDeviceRef.setDeviceOccupyStatus(DeviceOccupyStatusEnum.OCCUPIED.getValue());
                 agentDeviceRef.setDeviceName(deviceInfo.getDeviceName());
                 agentDeviceRef.setDeviceUdid(deviceInfo.getDeviceUdid());
-                agentDeviceRefMapper.insert(agentDeviceRef);
+                agentDeviceReferenceMapper.insert(agentDeviceRef);
             }
         }
     }
@@ -214,11 +215,11 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
         AgentEvalTaskDetail taskDetail = new AgentEvalTaskDetail();
         List<DeviceInfo> deviceInfoList = new ArrayList<>();
         BeanUtils.copyProperties(taskDo, taskDetail);
-        List<AgentDeviceReferenceDo> agentDeviceRefDoList = getAgentDeviceRefDos(taskDo);
-        agentDeviceRefDoList.stream()
-                .map(agentDeviceRefDo -> {
+        List<AgentDeviceReferenceDo> agentDeviceReferenceDoList = getAgentDeviceRefDos(taskDo);
+        agentDeviceReferenceDoList.stream()
+                .map(agentDeviceReferenceDo -> {
                     DeviceInfo deviceInfo = new DeviceInfo();
-                    BeanUtils.copyProperties(agentDeviceRefDo, deviceInfo);
+                    BeanUtils.copyProperties(agentDeviceReferenceDo, deviceInfo);
                     return deviceInfo;
                 })
                 .forEach(deviceInfoList::add);
@@ -229,7 +230,7 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
     private List<AgentDeviceReferenceDo> getAgentDeviceRefDos(AgentEvalTaskDo taskDo) {
         LambdaQueryWrapper<AgentDeviceReferenceDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AgentDeviceReferenceDo::getTaskId, taskDo.getId());
-        return agentDeviceRefMapper.selectList(queryWrapper);
+        return agentDeviceReferenceMapper.selectList(queryWrapper);
     }
 
     /**
@@ -239,22 +240,19 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
      */
     public void deleteTaskDo(String taskId) {
         if (StringUtils.isBlank(taskId)) {
-            // throw new BusinessException(BizErrorCode.PARAM_INVALID);
-            throw new RuntimeException("error");
+            throw new BusinessException(BizErrorCode.PARAM_INVALID);
         }
         AgentEvalTaskDo taskDo = getById(taskId);
         if (Objects.isNull(taskDo)) {
-            // throw new BusinessException(BizErrorCode.PARAM_INVALID, "Task does not exist。");
-            throw new RuntimeException("error");
+            throw new BusinessException(BizErrorCode.PARAM_INVALID, "Task does not exist。");
         }
         AgentEvalTaskDo queryTaskDo = new AgentEvalTaskDo();
         queryTaskDo.setId(taskId);
-        List<AgentDeviceReferenceDo> agentDeviceRefDos = getAgentDeviceRefDos(queryTaskDo);
-        boolean anyMatch = agentDeviceRefDos.stream().anyMatch(agentDeviceRefDo ->
-                DeviceOccupyStatusEnum.OCCUPIED.getValue().equals(agentDeviceRefDo.getDeviceOccupyStatus()));
+        List<AgentDeviceReferenceDo> agentDeviceReferenceDos = getAgentDeviceRefDos(queryTaskDo);
+        boolean anyMatch = agentDeviceReferenceDos.stream().anyMatch(agentDeviceReferenceDo ->
+                DeviceOccupyStatusEnum.OCCUPIED.getValue().equals(agentDeviceReferenceDo.getDeviceOccupyStatus()));
         if (anyMatch) {
-            // throw new BusinessException(BizErrorCode.OPERATION_NOT_SUPPORT, "The current task has device occupy.");
-            throw new RuntimeException("error");
+            throw new BusinessException(BizErrorCode.OPERATION_NOT_SUPPORT, "The current task has device occupy.");
         }
         // todo: check testing task
         /*List<CloudDeviceJobDo> jobs = jobService.lambdaQuery().eq(CloudDeviceJobDo::getTaskId, taskId).list();
@@ -264,7 +262,7 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
         agentEvalTaskMapper.deleteById(taskId);
         LambdaQueryWrapper<AgentDeviceReferenceDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AgentDeviceReferenceDo::getTaskId, taskId);
-        agentDeviceRefMapper.delete(queryWrapper);
+        agentDeviceReferenceMapper.delete(queryWrapper);
     }
 
     /**
@@ -276,9 +274,9 @@ public class AgentEvalTaskService extends ServiceImpl<AgentEvalTaskMapper, Agent
         LambdaQueryWrapper<AgentDeviceReferenceDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AgentDeviceReferenceDo::getDeviceUdid, udid)
                 .eq(AgentDeviceReferenceDo::getTaskId, taskId);
-        AgentDeviceReferenceDo agentDeviceRefDo = agentDeviceRefMapper.selectOne(queryWrapper);
-        if(!Objects.isNull(agentDeviceRefDo)){
-            agentDeviceRefMapper.delete(queryWrapper);
+        AgentDeviceReferenceDo agentDeviceReferenceDo = agentDeviceReferenceMapper.selectOne(queryWrapper);
+        if(!Objects.isNull(agentDeviceReferenceDo)){
+            agentDeviceReferenceMapper.delete(queryWrapper);
         }
     }
 }

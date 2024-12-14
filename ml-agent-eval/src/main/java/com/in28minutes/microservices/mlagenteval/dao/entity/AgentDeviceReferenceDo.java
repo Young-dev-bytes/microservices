@@ -33,12 +33,6 @@ public class AgentDeviceReferenceDo extends BaseEntity {
 
     private String timeout;
 
-    private String projectId;
-    private String tenantId;
-    private String createUser;
-    private String updateUser;
-
-
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)

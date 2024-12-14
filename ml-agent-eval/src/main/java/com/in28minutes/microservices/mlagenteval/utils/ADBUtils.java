@@ -6,6 +6,8 @@ import com.in28minutes.microservices.mlagenteval.common.event.JobEventRegisterCe
 import com.in28minutes.microservices.mlagenteval.common.event.JobStatusEvent;
 import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalJobInstanceDo;
 import com.in28minutes.microservices.mlagenteval.dto.ADBCMDReq;
+import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
+import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ADBUtils {
 
-    public static final String URL_EXEC_ADBCOMMAND = "http://192.168.31.115:8888/devices/execADBCommand";
+    public static final String URL_EXEC_ADBCOMMAND = "http://localhost:8888/devices/execADBCommand";
 
     public static boolean executeAction(String rsp, int[] screenSize, AgentEvalJobInstanceDo jobInstanceDo) {
         /*
@@ -120,7 +122,7 @@ public class ADBUtils {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String response = UseStreamUtils.readInputStream(connection.getInputStream());
                 String resp = UnicodeUtils.decodeUnicodeString(response);
-                return JsonUtils.parseObject(resp, JSONObject.class).getString("response");
+                return JsonUtils_.parseObject(resp, JSONObject.class).getString("response");
 
             } else {
                 System.out.println("POST request failed with response code: " + responseCode);
@@ -135,11 +137,17 @@ public class ADBUtils {
 
     public static CommonResponse execADBCmdServer(ADBCMDReq adbcmdReq, AgentEvalJobInstanceDo jobInstanceDo) {
         // return HttpUtil.post("http://10.162.168.141:8888/devices/execADBCommand", adbcmdReq, CommonResponse.class);
-        CommonResponse response = HttpUtil.post(URL_EXEC_ADBCOMMAND, adbcmdReq, CommonResponse.class);
-        if (!response.getSuccess()) {
-            JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED"));
+        try {
+            CommonResponse response = HttpUtil.post(URL_EXEC_ADBCOMMAND, adbcmdReq, CommonResponse.class);
+            if (!response.getSuccess()) {
+                JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, "exec adb cmd failed."));
+            }
+            return response;
+        }catch (Exception e){
+            JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, "exec adb cmd failed."));
+            throw new BusinessException(BizErrorCode.SERVER_ERROR,"exec adb cmd failed.");
         }
-        return response;
+
     }
 
 

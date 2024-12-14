@@ -16,4 +16,7 @@ public class JobStatusEvent {
 
     private String status;
 
+    private Integer currentTurn;
+
+    private String errorInfo;
 }

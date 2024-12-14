@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("t_agent_eval_job_instance_track")
-public class AgentEvalJobInstanceTrackDo {
+public class AgentEvalJobInstanceTrackDo extends BaseEntity{
     private static final long serialVersionUID = 1L;
 
     /** Primary Key */
@@ -29,16 +29,4 @@ public class AgentEvalJobInstanceTrackDo {
 
     /** Track Detail: {"step":1,"thought":"xxx","observation":"xxx","action":"xxx","image_path":"xxx"} */
     private String trackDetail;
-
-    /** Project ID */
-    private String projectId;
-
-    /** Tenant ID */
-    private String tenantId;
-
-    /** Creator */
-    private String createUser;
-
-    /** Updater */
-    private String updateUser;
 }

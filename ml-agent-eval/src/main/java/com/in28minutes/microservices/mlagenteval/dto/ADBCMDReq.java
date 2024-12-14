@@ -10,4 +10,6 @@ public class ADBCMDReq {
     private String udId;
     @NotBlank
     private String cmd;
+
+    private String screenshotPath;
 }

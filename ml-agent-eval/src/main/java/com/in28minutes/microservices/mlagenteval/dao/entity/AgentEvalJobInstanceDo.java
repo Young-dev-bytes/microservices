@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("t_agent_eval_job_instance")
-public class AgentEvalJobInstanceDo {
+public class AgentEvalJobInstanceDo extends BaseEntity{
     private static final long serialVersionUID = 1L;
 
     /** Primary Key */
@@ -25,20 +25,10 @@ public class AgentEvalJobInstanceDo {
     private String jobStatus;
 
     /** Job Instance Task Information: {"AGRO01":"AGRO02"} */
-    private String trackInfo;
+    private String deviceId;
+
+    private String errorInfo;
 
     /** Current Execution Round */
     private Integer turn;
-
-    /** Project ID */
-    private String projectId;
-
-    /** Tenant ID */
-    private String tenantId;
-
-    /** Creator */
-    private String createUser;
-
-    /** Updater */
-    private String updateUser;
 }

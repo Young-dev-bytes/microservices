@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentEvalJobDetail extends AgentEvalJobDo {
-
     private List<DeviceInfo> deviceInfoList;
 
+    private List<InstanceTaskInfo> instanceTaskInfos;
 }
