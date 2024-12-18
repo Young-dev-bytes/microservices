@@ -13,7 +13,9 @@ public class InstanceTrackDetailInfo {
 
     private String step;
 
-    private String imagePath;
+    private String imagePathBefore;
+
+    private String imagePathAfter;
 
     private Boolean isSuccess;
 

@@ -18,7 +18,7 @@ import com.in28minutes.microservices.mlagenteval.utils.ADBUtils;
 import com.in28minutes.microservices.mlagenteval.utils.FilePathUtils;
 import com.in28minutes.microservices.mlagenteval.utils.JsonUtils;
 import com.in28minutes.microservices.mlagenteval.utils.UuidUtils;
-import com.in28minutes.microservices.mlagenteval.utils.spring.SpringUtils;
+import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -39,7 +39,7 @@ public class JobExecEventHandler {
     public static final String SCREENSHOT_PNG = "screenshot.png";
     public static final String CACHE = "cache";
     // AgentConfig agentConfig = SpringBeanUtils.getBean(AgentConfig.class);
-    AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
+    AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
 
 
     @Subscribe
@@ -50,7 +50,7 @@ public class JobExecEventHandler {
             return;
         }
 
-        AgentEvalJobInstanceMapper instanceMapper = SpringUtils.getBean(AgentEvalJobInstanceMapper.class);
+        AgentEvalJobInstanceMapper instanceMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceMapper.class);
         // NfsService nfsService = new NfsService(NFS_SERVER, EXPORTED_PATH);
         AgentEvalJobDetail jobDetail = jobExecEvent.getJobDetail();
         DeviceInfo device = jobDetail.getDeviceInfoList().get(0);
@@ -72,7 +72,7 @@ public class JobExecEventHandler {
             // request to get screen size.
             ADBCMDReq adbcmdReq = new ADBCMDReq();
             adbcmdReq.setUdId(udId);
-            adbcmdReq.setCmd(ADBCommand.WM_SIZE.getCommand());
+            adbcmdReq.setCmd(ADBCommand.WM_SIZE.getValue());
             /*CommonResponse resp = ADBUtils.execADBCmdServer(adbcmdReq, jobInstanceDo);
             String screenSize = String.valueOf(resp.getData());
             if (StringUtils.isEmpty(screenSize)) {
@@ -112,7 +112,7 @@ public class JobExecEventHandler {
                         throw new BusinessException(BizErrorCode.SERVER_ERROR, e.getMessage());
                     }
 
-                    adbcmdReq.setCmd(ADBCommand.PULL_SCREENSHOT.getCommand());
+                    adbcmdReq.setCmd(ADBCommand.PULL_SCREENSHOT.getValue());
                     adbcmdReq.setScreenshotPath(FilePathUtils.buildFilePath(jobId, instanceId, jobInstanceTrackDo.getId(), CACHE));
                     // ADBUtils.execADBCmdServer(adbcmdReq, jobInstanceDo);
 
@@ -347,7 +347,7 @@ public class JobExecEventHandler {
         jobInstanceDo.setJobId(jobDetail.getId());
         jobInstanceDo.setJobStatus("CREATED");
         jobInstanceDo.setJobId(jobDetail.getId());
-        jobInstanceDo.setTurn(curr);
+        jobInstanceDo.setCurrentTurn(curr);
         jobInstanceDo.setDeviceId(device.getDeviceUdid());
         jobInstanceDo.setCreateTime(LocalDateTime.now());
         instanceMapper.insert(jobInstanceDo);

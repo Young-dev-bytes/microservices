@@ -1,14 +1,20 @@
 package com.in28minutes.microservices.mlagenteval.controller;
 
 import com.in28minutes.microservices.mlagenteval.common.CommonResponse;
+import com.in28minutes.microservices.mlagenteval.constant.Constants;
 import com.in28minutes.microservices.mlagenteval.dto.*;
 import com.in28minutes.microservices.mlagenteval.service.AgentEvalJobService;
 import com.in28minutes.microservices.mlagenteval.service.AgentEvalTaskService;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 功能描述:
@@ -25,6 +31,8 @@ public class AgentEvalJobController {
     @Autowired
     private AgentEvalJobService evalJobService;
 
+
+    /************JOB START************************/
     /**
      * save job
      *
@@ -32,9 +40,19 @@ public class AgentEvalJobController {
      * @return 返回响应
      */
     @RequestMapping(value = "/save", method = RequestMethod.POST)
-    public CommonResponse getJobList(@Valid @RequestBody AgentEvalJobSaveReq request) {
-        evalJobService.save(request);
-        return CommonResponse.successResponse();
+    public CommonResponse saveJob(@Valid @RequestBody AgentEvalJobReq request) {
+        return CommonResponse.successResponse(evalJobService.saveJob(request));
+    }
+
+    /**
+     * job update
+     *
+     * @param request request
+     * @return 返回响应
+     */
+    @RequestMapping(value = "/update", method = RequestMethod.POST)
+    public CommonResponse updateJob(@Valid @RequestBody AgentEvalJobReq request) {
+        return CommonResponse.successResponse(evalJobService.updateJob(request));
     }
 
     /**
@@ -44,8 +62,8 @@ public class AgentEvalJobController {
      * @return 返回响应
      */
     @RequestMapping(value = "/page", method = RequestMethod.POST)
-    public CommonResponse getJobListByTask(@Valid @RequestBody AgentEvalJobPageReq request) {
-        return CommonResponse.successResponse(evalJobService.getJobListByTask(request));
+    public CommonResponse retrieveJobPage(@Valid @RequestBody AgentEvalJobPageReq request) {
+        return CommonResponse.successResponse(evalJobService.retrieveJobPage(request));
     }
 
     /**
@@ -55,46 +73,67 @@ public class AgentEvalJobController {
      * @return 返回响应
      */
     @RequestMapping(value = "/detail", method = RequestMethod.POST)
-    public CommonResponse getJobDetail(@RequestParam String jobId) {
-        return CommonResponse.successResponse(evalJobService.getJobDetail(jobId));
+    public CommonResponse retrieveJobDetail(@RequestParam String jobId) {
+        return CommonResponse.successResponse(evalJobService.retrieveJobDetail(jobId));
     }
 
     /**
-     * deleteBatch
+     * jobDelete
      *
-     * @param jobIdLists jobIdLists
+     * @param jobId jobId
      * @return CommonResponse
      */
-    @RequestMapping(value = "/deleteBatch", method = RequestMethod.POST)
-    @ResponseBody
-    public CommonResponse jobDeleteBatch(@RequestBody List<String> jobIdLists) {
-        // evalJobService.deleteJobBatch(jobIdLists);
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    public CommonResponse jobDelete(@RequestParam String jobId) {
+        evalJobService.jobDelete(jobId);
         return CommonResponse.successResponse();
     }
 
-    /**
-     * job update
-     *
-     * @param jobId jobId
-     * @return 返回响应
-     */
-    @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public CommonResponse updateJob(@RequestParam String jobId) {
-        return CommonResponse.successResponse(evalJobService.getJobDetail(jobId));
-    }
+    /************JOB END************************/
+
+
+
+    /************JOB INSTANCE START****************/
 
     /**
-     * execJob
+     * exec instance Job
      *
      * @param request request
      * @return CommonResponse
      */
-    @RequestMapping(value = "/exec", method = RequestMethod.POST)
-    public CommonResponse startExecJob(@Valid @RequestBody AgentEvalJobExecReq request) {
-        evalJobService.startExecJob(request);
+    @RequestMapping(value = "/instance/exec", method = RequestMethod.POST)
+    public CommonResponse startExecInstanceJob(@Valid @RequestBody AgentEvalJobExecReq request) {
+        evalJobService.startExecInstanceJob(request);
         return CommonResponse.successResponse();
     }
 
+    /**
+     * stop instance job
+     *
+     * @param jobId jobId
+     * @return CommonResponse
+     */
+    @RequestMapping(value = "/instance/stop", method = RequestMethod.POST)
+    public CommonResponse stopInstanceJob(@RequestParam String jobId) {
+        evalJobService.stopInstanceJob(jobId);
+        return CommonResponse.successResponse();
+    }
+
+    /**
+     * retrieve Instance Page
+     *
+     * @param request request
+     * @return CommonResponse
+     */
+    @RequestMapping(value = "/instance/page", method = RequestMethod.POST)
+    public PageBaseResponse<AgentEvalJobInstanceRes> retrieveInstancePage(@Valid @RequestBody AgentEvalJobInstancePageReq request) {
+        return evalJobService.retrieveInstancePage(request);
+    }
+    /************JOB INSTANCE END****************/
+
+
+
+    /************JOB INSTANCE TRACK START****************/
     /**
      * jobTrackPage
      *
@@ -102,8 +141,8 @@ public class AgentEvalJobController {
      * @return CommonResponse
      */
     @RequestMapping(value = "/track/page", method = RequestMethod.POST)
-    public CommonResponse jobTrackPage(@Valid @RequestBody AgentEvalInstTrackReq agentEvalInstTrackReq) {
-        return CommonResponse.successResponse(evalJobService.jobTrackPage(agentEvalInstTrackReq));
+    public PageBaseResponse<InstanceTrackInfo> jobTrackPage(@Valid @RequestBody AgentEvalInstTrackReq agentEvalInstTrackReq) {
+        return evalJobService.jobTrackPage(agentEvalInstTrackReq);
     }
 
     /**
@@ -135,9 +174,33 @@ public class AgentEvalJobController {
      * @param imgPath imgPath
      * @return CommonResponse
      */
-    @RequestMapping(value = "/track/update", method = RequestMethod.POST)
+    @RequestMapping(value = "/track/checkImg", method = RequestMethod.GET)
     public CommonResponse checkStepImages(@RequestParam String imgPath) {
-        evalJobService.checkStepImages(imgPath);
+        return CommonResponse.successResponse(evalJobService.checkStepImages(imgPath));
+    }
+
+    /**
+     * trackBatchDelete
+     *
+     * @param request request
+     * @return CommonResponse
+     */
+    @RequestMapping(value = "/track/batchDelete", method = RequestMethod.POST)
+    public CommonResponse trackBatchDelete(@Valid @RequestBody AgentEvalJobTrackDelReq request) {
+        evalJobService.trackBatchDelete(request);
         return CommonResponse.successResponse();
     }
+
+    /**
+     * trackBatchDelete
+     *
+     * @param request request
+     * @return CommonResponse
+     */
+    @RequestMapping(value = "/track/download", method = RequestMethod.GET)
+    @ApiResponses({@ApiResponse(code = Constants.CODE_OK, response = File.class, message = "")})
+    public ResponseEntity<InputStream> trackDownload(@Valid @RequestBody AgentEvalJobTrackDownReq request) throws IOException {
+        return evalJobService.trackDownload(request);
+    }
+    /************JOB INSTANCE TRACK END****************/
 }

@@ -5,7 +5,6 @@ package com.in28minutes.microservices.mlagenteval.common;
 //import com.hihonor.zeus.common.log.enums.LogPrintPolicy;
 
 import lombok.Data;
-
 import org.slf4j.MDC;
 
 @Data

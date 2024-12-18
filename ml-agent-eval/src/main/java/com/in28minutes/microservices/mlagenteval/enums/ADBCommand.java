@@ -10,7 +10,7 @@ public enum ADBCommand {
         this.value = value;
     }
 
-    public String getCommand() {
+    public String getValue() {
         return value;
     }
 }

@@ -46,7 +46,7 @@ public class AgentEvalTaskController {
      * @return PageBaseResponse
      */
     @RequestMapping(value = "/page", method = RequestMethod.POST)
-    public Object queryTaskByPage(@Valid @RequestBody AgentEvalTaskPageReq request) {
+    public PageBaseResponse<AgentEvalTaskDetail> queryTaskByPage(@Valid @RequestBody AgentEvalTaskPageReq request) {
         return evalTaskService.pageByProject(request);
     }
 
@@ -61,6 +61,19 @@ public class AgentEvalTaskController {
         evalTaskService.deleteTaskList(request);
         return CommonResponse.successResponse();
     }
+
+   /* *//**
+     * Occupation timeout enumeration
+     *
+     * @return CommonResponse
+     *//*
+    @RequestMapping(value = "/timeout/enum", method = RequestMethod.GET)
+    public CommonResponse getTimeOutEnum() {
+        List<Pair<String, String>> statusList = Arrays.stream(OccupyTimeOutEnum.values())
+                .map(item -> Pair.of(item.getValue(), item.getDesc()))
+                .collect(Collectors.toList());
+        return CommonResponse.successResponse(statusList);
+    }*/
 
     /**
      * Occupy devices

@@ -7,7 +7,7 @@ import com.alibaba.druid.util.Utils;
 import com.in28minutes.microservices.mlagenteval.config.properties.DruidProperties;
 import com.in28minutes.microservices.mlagenteval.datasource.DynamicDataSource;
 import com.in28minutes.microservices.mlagenteval.enums.DataSourceType;
-import com.in28minutes.microservices.mlagenteval.utils.spring.SpringUtils;
+import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -67,7 +67,7 @@ public class DruidConfig
     {
         try
         {
-            DataSource dataSource = SpringUtils.getBean(beanName);
+            DataSource dataSource = SpringBeanUtils.getBean(beanName);
             targetDataSources.put(sourceName, dataSource);
         }
         catch (Exception e)

@@ -30,5 +30,5 @@ public class AgentEvalJobInstanceDo extends BaseEntity{
     private String errorInfo;
 
     /** Current Execution Round */
-    private Integer turn;
+    private Integer currentTurn;
 }

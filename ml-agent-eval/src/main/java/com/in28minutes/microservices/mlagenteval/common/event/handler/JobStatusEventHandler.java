@@ -7,7 +7,7 @@ import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalJobInstance
 import com.in28minutes.microservices.mlagenteval.dao.mapper.AgentEvalJobInstanceMapper;
 import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
 import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
-import com.in28minutes.microservices.mlagenteval.utils.spring.SpringUtils;
+import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -23,7 +23,7 @@ public class JobStatusEventHandler {
 
     @Subscribe
     public void handle(JobStatusEvent jobStatusEvent) {
-        AgentEvalJobInstanceMapper instanceMapper = SpringUtils.getBean(AgentEvalJobInstanceMapper.class);
+        AgentEvalJobInstanceMapper instanceMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceMapper.class);
         log.info("jobStatusEvent: instanceId[{}], status[{}], current turn[{}]", jobStatusEvent.getInstanceId(), jobStatusEvent.getStatus(), jobStatusEvent.getCurrentTurn());
         AgentEvalJobInstanceDo evalJobInstanceDo = instanceMapper.selectById(jobStatusEvent.getInstanceId());
         if (Objects.isNull(evalJobInstanceDo)) {
@@ -31,7 +31,7 @@ public class JobStatusEventHandler {
         }
         evalJobInstanceDo.setJobStatus(jobStatusEvent.getStatus());
         if(!Objects.isNull(jobStatusEvent.getCurrentTurn())) {
-            evalJobInstanceDo.setTurn(jobStatusEvent.getCurrentTurn());
+            evalJobInstanceDo.setCurrentTurn(jobStatusEvent.getCurrentTurn());
         }
         if(!Strings.isNullOrEmpty(jobStatusEvent.getErrorInfo())) {
             evalJobInstanceDo.setErrorInfo(jobStatusEvent.getErrorInfo());

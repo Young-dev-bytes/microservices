@@ -6,11 +6,10 @@ import com.in28minutes.microservices.mlagenteval.common.event.JobTrackDetailEven
 import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalJobInstanceTrackDo;
 import com.in28minutes.microservices.mlagenteval.dao.mapper.AgentEvalJobInstanceTrackMapper;
 import com.in28minutes.microservices.mlagenteval.dto.InstanceTrackDetailInfo;
-import com.in28minutes.microservices.mlagenteval.dto.InstanceTrackInfo;
 import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
 import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
 import com.in28minutes.microservices.mlagenteval.utils.JsonUtils;
-import com.in28minutes.microservices.mlagenteval.utils.spring.SpringUtils;
+import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -21,21 +20,17 @@ import java.util.Objects;
 public class JobTrackDetailEventHandler {
     @Subscribe
     public void handle(JobTrackDetailEvent jobTrackDetailEvent) {
-        AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
+        AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
         log.info("jobTrackDetailEvent: trackId[{}]", jobTrackDetailEvent.getTrackId());
         AgentEvalJobInstanceTrackDo evalJobInstanceDo = agentEvalJobInstanceTrackMapper.selectById(jobTrackDetailEvent.getTrackId());
         if (Objects.isNull(evalJobInstanceDo)) {
             throw new BusinessException(BizErrorCode.SERVER_ERROR, "track info not exist!");
         }
-        InstanceTrackInfo instanceTrackInfo = JsonUtils.parseObject(evalJobInstanceDo.getTrackInfo(), InstanceTrackInfo.class);
         List<String> respInfers = jobTrackDetailEvent.getRespInfers();
         if (!CollectionUtils.isEmpty(respInfers)) {
             List<InstanceTrackDetailInfo> instanceTrackDetailInfos =
                     parseRespInferToInstanceTrackDetailInfo(respInfers);
             evalJobInstanceDo.setTrackDetail(JsonUtils.toJsonString(instanceTrackDetailInfos));
-            int realStepNum = instanceTrackDetailInfos.size();
-            instanceTrackInfo.setRealStepNum(String.valueOf(realStepNum));
-            evalJobInstanceDo.setTrackInfo(JsonUtils.toJsonString(instanceTrackInfo));
         }
         agentEvalJobInstanceTrackMapper.updateById(evalJobInstanceDo);
     }
@@ -53,9 +48,11 @@ public class JobTrackDetailEventHandler {
                 } else if (part.startsWith("Action: ")) {
                     detailInfo.setAction(part.substring("Action: ".length()));
                 } else if (part.startsWith("Step: ")) {
-                    detailInfo.setStep(part.substring("Step:".length()));
-                } else if (part.startsWith("ImgPath: ")) {
-                    detailInfo.setImagePath(part.substring("ImgPath:".length()));
+                    detailInfo.setStep(part.substring("Step: ".length()));
+                } else if (part.startsWith("ImgPathBefore: ")) {
+                    detailInfo.setImagePathBefore(part.substring("ImgPathBefore: ".length()));
+                } else if (part.startsWith("ImgPathAfter: ")) {
+                    detailInfo.setImagePathAfter(part.substring("ImgPathAfter: ".length()));
                 }
             }
             detailInfoList.add(detailInfo);
