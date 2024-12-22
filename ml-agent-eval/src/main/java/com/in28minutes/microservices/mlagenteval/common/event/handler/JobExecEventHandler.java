@@ -14,13 +14,16 @@ import com.in28minutes.microservices.mlagenteval.dto.*;
 import com.in28minutes.microservices.mlagenteval.enums.ADBCommand;
 import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
 import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
+import com.in28minutes.microservices.mlagenteval.service.AgentOperationService;
 import com.in28minutes.microservices.mlagenteval.utils.ADBUtils;
 import com.in28minutes.microservices.mlagenteval.utils.FilePathUtils;
 import com.in28minutes.microservices.mlagenteval.utils.JsonUtils;
 import com.in28minutes.microservices.mlagenteval.utils.UuidUtils;
 import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
+import com.in28minutes.microservices.mlagenteval.websockets.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.websocket.Session;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,6 +43,8 @@ public class JobExecEventHandler {
     public static final String CACHE = "cache";
     // AgentConfig agentConfig = SpringBeanUtils.getBean(AgentConfig.class);
     AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
+    WebSocketSessionManager webSocketSessionManager = SpringBeanUtils.getBean(WebSocketSessionManager.class);
+    AgentOperationService agentOperationService = SpringBeanUtils.getBean(AgentOperationService.class);
 
 
     @Subscribe
@@ -62,7 +67,6 @@ public class JobExecEventHandler {
         IntStream.rangeClosed(1, executeTurn).forEach(curr -> {
             log.info("current execute turn: [{}]", curr);
             AgentEvalJobInstanceDo jobInstanceDo = buildAgentEvalJobInstanceDo(instanceMapper, jobDetail, device, curr);
-
             String instanceId = jobInstanceDo.getId();
             String jobId = jobInstanceDo.getJobId();
             log.info("jobStatusEvent: instanceId[{}]", instanceId);
@@ -80,10 +84,12 @@ public class JobExecEventHandler {
             }*/
 
             try {
-                Thread.sleep(2000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 throw new BusinessException(BizErrorCode.SERVER_ERROR, e.getMessage());
             }
+
+
 
             Iterator<InstanceTaskInfo> iterator = instanceTaskInfos.iterator();
             while (iterator.hasNext()) {
@@ -107,7 +113,7 @@ public class JobExecEventHandler {
                     ADBUtils.execADBCmdServer(adbcmdReq, jobInstanceDo);*/
 
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         throw new BusinessException(BizErrorCode.SERVER_ERROR, e.getMessage());
                     }
@@ -138,19 +144,31 @@ public class JobExecEventHandler {
 
                     // InputStream inputStream = nfsService.downloadNfsFile(filePath);
                     //String inferResp = ADBUtils.execInference(inputStream, prompt, "agentConfig.getUrlInference()," , jobInstanceDo.getId());
+                    Session session = webSocketSessionManager.getSession(instanceId);
                     String inferResp = "";
-                    if(stepCounter == 1) {
+                    if (stepCounter == 1) {
                         inferResp = "Observation: 在提供的支付宝应用截图中，我看到了主界面的布局。在屏幕的中部位置，有一个明显的“余额宝”图标或文字链接，这正是我们需要点击来打开余额宝菜单的元素。\n" +
                                 "\n" +
                                 "Thought: 根据观察，下一步应该是直接点击“余额宝”选项以打开余额宝菜单。由于“余额宝”位于屏幕中部，我们可以使用 tap 函数并提供适当的坐标来模拟点击操作。假设“余额宝”的中心点大约位于屏幕宽度的中间 (0.5) 和高度的大约三分之一处 (0.33)，这是个常见的布局位置。\n" +
                                 "\n" +
                                 "Action: tap(0.5, 0.33)";
-                    } else if(stepCounter == 2) {
+                        if (session != null && session.isOpen()) {
+                            agentOperationService.sendText(session, inferResp);
+                        } else {
+                            log.warn("No active session found for instanceId: {}", instanceId);
+                        }
+                    } else if (stepCounter == 2) {
                         inferResp = "Observation: 在提供的支付宝应用截图中，我可以看到主界面布局。在屏幕的中部位置，有一个明显的“余额宝”图标或文字链接，这正是我们需要点击来打开余额宝菜单的元素。\n" +
                                 "\n" +
                                 "Thought: 为了完成任务，下一步应该是在屏幕上找到并点击“余额宝”选项。由于我无法直接看到具体的坐标值，我将基于一般的设计原则进行估计。“余额宝”通常位于支付宝首页的中部偏上位置。如果这个点击成功，余额宝菜单将会打开，那么任务就完成了。\n" +
                                 "\n" +
                                 "Action: tap(0.5, 0.3), finish()";
+
+                        if (session != null && session.isOpen()) {
+                            agentOperationService.sendText(session, inferResp);
+                        } else {
+                            log.warn("No active session found for instanceId: {}", instanceId);
+                        }
                     }
 
                     log.info("inferResp:[{}]", inferResp);
@@ -164,7 +182,7 @@ public class JobExecEventHandler {
                     inferList.add(inferResp.concat(".\n\nStep: ".concat(String.valueOf(stepCounter))
                             .concat("\n\nImgPath: ").concat(imgPath).concat("/").concat(SCREENSHOT_PNG)));
 
-                    JobEventRegisterCenter.post(new JobTrackDetailEvent(jobInstanceTrackDo.getId(),inferList, String.valueOf(stepCounter)));
+                    JobEventRegisterCenter.post(new JobTrackDetailEvent(jobInstanceTrackDo.getId(), inferList, String.valueOf(stepCounter)));
 
                     String specAction = ADBUtils.obtainSpecAction(inferResp);
                     // Execute parsed actions; int[] screenSizeArr = {1080, 2340}; // 示例屏幕尺寸
@@ -175,7 +193,7 @@ public class JobExecEventHandler {
                     log.info("=========================== step: " + stepCounter + " exec finished =======================");
 
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         throw new BusinessException(BizErrorCode.SERVER_ERROR, e.getMessage());
                     }
