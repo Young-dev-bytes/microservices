@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 public class DeviceInfo {
     private String deviceName;
 
+    private String deviceFullName;
+
     @NotBlank
     private String deviceUdid;
 

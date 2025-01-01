@@ -6,6 +6,8 @@ import com.in28minutes.microservices.mlagenteval.common.event.JobEventRegisterCe
 import com.in28minutes.microservices.mlagenteval.common.event.JobExecEvent;
 import com.in28minutes.microservices.mlagenteval.common.event.JobStatusEvent;
 import com.in28minutes.microservices.mlagenteval.common.event.JobTrackDetailEvent;
+import com.in28minutes.microservices.mlagenteval.common.websocket.MessageSendUtils;
+import com.in28minutes.microservices.mlagenteval.common.websocket.WebSocketSessionManager;
 import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalJobInstanceDo;
 import com.in28minutes.microservices.mlagenteval.dao.entity.AgentEvalJobInstanceTrackDo;
 import com.in28minutes.microservices.mlagenteval.dao.mapper.AgentEvalJobInstanceMapper;
@@ -14,16 +16,14 @@ import com.in28minutes.microservices.mlagenteval.dto.*;
 import com.in28minutes.microservices.mlagenteval.enums.ADBCommand;
 import com.in28minutes.microservices.mlagenteval.enums.BizErrorCode;
 import com.in28minutes.microservices.mlagenteval.exception.BusinessException;
-import com.in28minutes.microservices.mlagenteval.service.AgentOperationService;
 import com.in28minutes.microservices.mlagenteval.utils.ADBUtils;
 import com.in28minutes.microservices.mlagenteval.utils.FilePathUtils;
 import com.in28minutes.microservices.mlagenteval.utils.JsonUtils;
 import com.in28minutes.microservices.mlagenteval.utils.UuidUtils;
 import com.in28minutes.microservices.mlagenteval.utils.spring.SpringBeanUtils;
-import com.in28minutes.microservices.mlagenteval.websockets.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.socket.WebSocketSession;
 
-import javax.websocket.Session;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,7 +44,6 @@ public class JobExecEventHandler {
     // AgentConfig agentConfig = SpringBeanUtils.getBean(AgentConfig.class);
     AgentEvalJobInstanceTrackMapper agentEvalJobInstanceTrackMapper = SpringBeanUtils.getBean(AgentEvalJobInstanceTrackMapper.class);
     WebSocketSessionManager webSocketSessionManager = SpringBeanUtils.getBean(WebSocketSessionManager.class);
-    AgentOperationService agentOperationService = SpringBeanUtils.getBean(AgentOperationService.class);
 
 
     @Subscribe
@@ -88,7 +87,6 @@ public class JobExecEventHandler {
             } catch (InterruptedException e) {
                 throw new BusinessException(BizErrorCode.SERVER_ERROR, e.getMessage());
             }
-
 
 
             Iterator<InstanceTaskInfo> iterator = instanceTaskInfos.iterator();
@@ -144,7 +142,7 @@ public class JobExecEventHandler {
 
                     // InputStream inputStream = nfsService.downloadNfsFile(filePath);
                     //String inferResp = ADBUtils.execInference(inputStream, prompt, "agentConfig.getUrlInference()," , jobInstanceDo.getId());
-                    Session session = webSocketSessionManager.getSession(instanceId);
+                    WebSocketSession session = webSocketSessionManager.getSession(instanceId);
                     String inferResp = "";
                     if (stepCounter == 1) {
                         inferResp = "Observation: 在提供的支付宝应用截图中，我看到了主界面的布局。在屏幕的中部位置，有一个明显的“余额宝”图标或文字链接，这正是我们需要点击来打开余额宝菜单的元素。\n" +
@@ -153,7 +151,7 @@ public class JobExecEventHandler {
                                 "\n" +
                                 "Action: tap(0.5, 0.33)";
                         if (session != null && session.isOpen()) {
-                            agentOperationService.sendText(session, inferResp);
+                            MessageSendUtils.sendText(session, inferResp);
                         } else {
                             log.warn("No active session found for instanceId: {}", instanceId);
                         }
@@ -165,7 +163,7 @@ public class JobExecEventHandler {
                                 "Action: tap(0.5, 0.3), finish()";
 
                         if (session != null && session.isOpen()) {
-                            agentOperationService.sendText(session, inferResp);
+                            MessageSendUtils.sendText(session, inferResp);
                         } else {
                             log.warn("No active session found for instanceId: {}", instanceId);
                         }
