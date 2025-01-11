@@ -1,6 +1,5 @@
 package com.young.microservices.mlagenteval.utils;
 
-import com.young.microservices.mlagenteval.constant.Constants;
 import org.springframework.util.AntPathMatcher;
 
 import java.util.*;
@@ -292,7 +291,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      * @return 结果
      */
     public static boolean ishttp(String link) {
-        return StringUtils.startsWithAny(link, Constants.HTTP, Constants.HTTPS);
+        return StringUtils.startsWithAny(link, "http", "https");
     }
 
     /**

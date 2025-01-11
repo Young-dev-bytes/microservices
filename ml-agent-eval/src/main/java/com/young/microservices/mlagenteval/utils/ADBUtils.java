@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -140,11 +141,11 @@ public class ADBUtils {
         try {
             CommonResponse response = HttpUtil.post(URL_EXEC_ADBCOMMAND, adbcmdReq, CommonResponse.class);
             if (!response.getSuccess()) {
-                JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, "exec adb cmd failed."));
+                JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, LocalDateTime.now(),"exec adb cmd failed."));
             }
             return response;
         }catch (Exception e){
-            JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, "exec adb cmd failed."));
+            JobEventRegisterCenter.post(new JobStatusEvent(jobInstanceDo.getId(), "FAILED", null, LocalDateTime.now(),"exec adb cmd failed."));
             throw new BusinessException(BizErrorCode.SERVER_ERROR,"exec adb cmd failed.");
         }
 
