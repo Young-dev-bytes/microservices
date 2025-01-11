@@ -18,6 +18,8 @@
         <java.version>17</java.version>
         <!--<spring-cloud.version>2023.0.0</spring-cloud.version>-->
         <spring-cloud.version>2020.0.2</spring-cloud.version>
+        <poi-ooxml.version>5.2.3</poi-ooxml.version>
+        <open-viewer.version>6.6.14</open-viewer.version>
     </properties>
     <dependencies>
         <dependency>
@@ -88,6 +90,21 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi-ooxml.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.jpedal</groupId>
+            <artifactId>OpenViewerFX</artifactId>
+            <version>6.6.14</version>
+        </dependency>
+
+
+
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
@@ -104,6 +121,9 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
+
+
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -131,7 +151,7 @@
                 <configuration>
                     <excludes>
                         <exclude>
-                            <groupId>org.projectlombok</groupId>
+                            <groupId>org.project-lombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
